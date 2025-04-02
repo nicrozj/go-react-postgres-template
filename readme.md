@@ -40,8 +40,6 @@ git clone https://github.com/yourusername/go-react-template
 cd go-react-template
 ```
 
-````
-
 2. Запустите в нужном режиме:
 
 ```bash
@@ -92,4 +90,7 @@ VITE_API_BASE_URL=/api
 ```
 
 ```
-````
+
+```
+
+```
