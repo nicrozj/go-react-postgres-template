@@ -2,6 +2,8 @@ package models
 
 import (
 	"backend/internal/types"
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -43,13 +45,32 @@ func GetUserById(db *sqlx.DB, id int) (types.User, error) {
 	return user, nil
 }
 
-func UpdateUserById(db *sqlx.DB, user *types.User) error {
+func UpdateUser(ctx context.Context, db *sqlx.DB, id int, name string) error {
+	if db == nil {
+			return errors.New("db is nil")
+	}
+
 	query := `UPDATE users SET name = :name WHERE id = :id`
 	
-	_, err := db.NamedExec(query, user)
-	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
+	params := map[string]interface{}{
+			"id":   id,
+			"name": name,
 	}
+	
+	result, err := db.NamedExecContext(ctx, query, params)
+	if err != nil {
+			return fmt.Errorf("failed to update user: %w", err)
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	
+	if rowsAffected == 0 {
+			return fmt.Errorf("no user found with id %d", id)
+	}
+	
 	return nil
 }
 

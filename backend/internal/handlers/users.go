@@ -18,7 +18,9 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		userGroup.GET("", GetUsers)
 		userGroup.GET("/:id", GetUserById)
+		userGroup.POST("/:name", CreateUser)
 		userGroup.DELETE("/:id", DeleteUserById)
+		userGroup.PATCH("/:id", UpdateUser)
 	}
 }
 
@@ -68,11 +70,45 @@ func GetUserById(c *gin.Context) {
 }
 
 func CreateUser(c *gin.Context) {
-	c.String(200, "user added")
+	name := c.Param("name")
+
+	lastId, err := models.CreateUser(db.DB, &types.User{Name: name})
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, lastId)
 }
 
 func UpdateUser(c *gin.Context) {
-	c.String(200, "user added")
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid ID"})
+			return
+	}
+
+	var input struct {
+			Name string `json:"name"`
+	}
+	
+	if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(400, gin.H{"error": "Bad request"})
+			return
+	}
+
+	err = models.UpdateUser(c.Request.Context(), db.DB, id, input.Name)
+	if err != nil {
+			c.JSON(500, gin.H{"error": "Update failed: " + err.Error()})
+			return
+	}
+
+	c.JSON(200, gin.H{
+			"status": "updated",
+			"id":     id,
+	})
 }
 
 func DeleteUserById(c *gin.Context) {
