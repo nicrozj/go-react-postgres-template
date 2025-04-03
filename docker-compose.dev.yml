@@ -7,17 +7,12 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=postgres
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=dbname
-      - DB_PORT=5432
     volumes:
       - ./backend:/app
     depends_on:
-      - postgres
-
+      - mysql
+    environment:
+      - DB_URL=user:password@tcp(mysql:3306)/dbname?parseTime=true
   frontend:
     build:
       context: ./frontend
@@ -30,16 +25,17 @@ services:
     environment:
       - NODE_ENV=development
 
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=dbname
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: dbname
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
 
   caddy:
     image: caddy:2-alpine
@@ -54,5 +50,5 @@ services:
       - frontend
 
 volumes:
-  postgres_data:
+  mysql_data:
   caddy_data:
