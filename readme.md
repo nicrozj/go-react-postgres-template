@@ -1,4 +1,4 @@
-# 🚀 Go + React + MySQL Starter Template
+# 🚀 Go + React + PostgreSQL Starter Template
 
 Минималистичный шаблон для полноценного веб-приложения с горячей перезагрузкой, проксированием и готовой инфраструктурой.
 
@@ -14,7 +14,7 @@
 - 🔄 **Два окружения**: Development & Production
 - 📦 Готовая **Docker-инфраструктура**
 - 🔒 Автоматическое проксирование через **Caddy**
-- 🐘 Поддержка **MySQL** с персистентным хранилищем
+- 🐘 Поддержка **PostgreSQL** с персистентным хранилищем
 - 🌐 Оптимизированные сетевые настройки
 
 ---
@@ -23,7 +23,7 @@
 
 | Компонент          | Технологии                  |
 | ------------------ | --------------------------- |
-| **Бэкенд**         | Go 1.24.1, Air, MySQL  |
+| **Бэкенд**         | Go 1.24.1, Air, PostgreSQL  |
 | **Фронтенд**       | React 18, Vite, TypeScript  |
 | **Инфраструктура** | Docker, Caddy, Alpine Linux |
 
@@ -52,7 +52,7 @@ docker-compose -f docker-compose.prod.yml up --build -d
 
 - Фронтенд: [http://localhost](http://localhost)
 - Бэкенд API: [http://http://localhost/api/\*](http://localhost/api/*)
-- MySQL: [Mys://user:password@localhost:5432/dbname](Mys://user:password@localhost:5432/dbname)
+- PostgreSQL: [postgres://user:password@localhost:5432/dbname](postgres://user:password@localhost:5432/dbname)
 
 ### Особенности продакшн-режима:
 

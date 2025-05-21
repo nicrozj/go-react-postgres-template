@@ -1,10 +1,10 @@
 :80 {
     handle_path /api/* {
 	    uri strip_prefix /api
-		reverse_proxy backend:8080
+		reverse_proxy backend
 	}
     
     handle {
-        reverse_proxy frontend:5173
+        reverse_proxy frontend:80
     }
 }

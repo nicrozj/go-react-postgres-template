@@ -1,12 +1,10 @@
-version: "3.8"
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
     environment:
-      - DB_URL=mysql://user:password@mysql:3306/dbname
+      - DB_URL=postgres://user:password@postgres:5432/dbname?sslmode=disable
     depends_on:
       - postgres
 
@@ -15,17 +13,16 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
 
-  mysql:
-    image: mysql:8
+  postgres:
+    image: postgres:15
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: dbname
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      POSTGRES_DB: dbname
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
   caddy:
     build:
@@ -40,5 +37,5 @@ services:
       - frontend
 
 volumes:
-  mysql_data:
+  postgres_data:
   caddy_data:

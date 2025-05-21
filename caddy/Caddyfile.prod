@@ -1,6 +1,6 @@
 :80 {
     handle /api/* {
-        reverse_proxy backend:8080
+        reverse_proxy backend
     }
     
     handle {
