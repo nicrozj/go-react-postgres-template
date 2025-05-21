@@ -1,25 +1,29 @@
 services:
   backend:
+    container_name: project-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
     volumes:
       - ./backend:/app
     depends_on:
       - postgres
-    environment:
-      - DB_URL=postgres://user:password@postgres:5432/dbname?sslmode=disable
+
   frontend:
+    container_name: project-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - NODE_ENV=development
 
   postgres:
+    container_name: project-postgres
     image: postgres:15
     environment:
       POSTGRES_DB: dbname
@@ -31,6 +35,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   caddy:
+    container_name: project-caddy
     image: caddy:2-alpine
     ports:
       - "80:80"
