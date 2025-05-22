@@ -24,7 +24,7 @@ services:
 
   postgres:
     image: postgres:latest
-    container_name: postgres_container
+    container_name: project-postgres
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
