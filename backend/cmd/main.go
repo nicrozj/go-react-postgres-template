@@ -1,10 +1,8 @@
 package main
 
 import (
-	"backend/internal/delivery"
-	"backend/internal/repository"
-	"backend/internal/usecase"
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -27,15 +25,13 @@ func main() {
 	}
 	defer db.Close()
 
-	authRepo := repository.NewAuthRepo(db)
-	tokenRepo := repository.NewTokenRepo(db)
-	authUC := usecase.NewAuthUsecase(authRepo, tokenRepo)
-	authHandler := delivery.NewAuthHandler(*authUC)
-
 	r := gin.Default()
 
-	r.POST("/registration", authHandler.Registration)
-	r.POST("/login", authHandler.Login)
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "backend is healthy!",
+		})
+	})
 
 	r.Run(":8080")
 }
