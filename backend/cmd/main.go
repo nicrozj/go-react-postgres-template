@@ -1,25 +1,26 @@
 package main
 
 import (
+	"backend/internal/config"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbHost     = "postgres"
-	dbPort     = "5432"
-	dbUser     = "admin"
-	dbPassword = "password"
-	dbName     = "db"
-)
-
 func main() {
-	db, err := sqlx.Connect("postgres",
-		"host="+dbHost+" port="+dbPort+" user="+dbUser+" password="+dbPassword+" dbname="+dbName+" sslmode=disable")
+	godotenv.Load()
+
+	dbConfig := config.LoadDBConfig()
+	db, err := sqlx.Connect(
+		"postgres",
+		"host="+dbConfig.Host+" port="+dbConfig.Port+
+			" user="+dbConfig.User+" password="+dbConfig.Password+
+			" dbname="+dbConfig.Name+" sslmode=disable",
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
