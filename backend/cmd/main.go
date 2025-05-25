@@ -2,8 +2,8 @@ package main
 
 import (
 	"backend/internal/config"
+	"backend/internal/handlers"
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -27,12 +27,6 @@ func main() {
 	defer db.Close()
 
 	r := gin.Default()
-
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "backend is healthy!",
-		})
-	})
-
+	r.GET("/greet", handlers.Greet)
 	r.Run(":8080")
 }
