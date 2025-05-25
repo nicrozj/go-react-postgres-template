@@ -1,23 +1,15 @@
 package config
 
-import "os"
+import (
+	"github.com/jmoiron/sqlx"
+)
 
-type DBConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Name     string
+type AppConfig struct {
+	DB *sqlx.DB
 }
 
-func LoadDBConfig() DBConfig {
-	db := DBConfig{
-		Host:     os.Getenv("DB_HOST"),
-		Port:     os.Getenv("DB_PORT"),
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Name:     os.Getenv("DB_NAME"),
+func NewAppConfig() *AppConfig {
+	return &AppConfig{
+		DB: NewDBClient(),
 	}
-
-	return db
 }
