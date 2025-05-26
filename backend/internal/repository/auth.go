@@ -26,7 +26,7 @@ func NewAuthRepo() AuthRepositoryInterface {
 }
 
 func (r AuthRepo) CreateUser(user *models.User) (int, error) {
-	query := "INSERT INTO users(username, password_hash) VALUES($1, $2) RETURNING id"
+	query := "INSERT INTO users(username, password_hash) VALUES(?, ?) RETURNING id"
 	_, err := r.db.Exec(query, user.Username, user.PasswordHash)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to create user")
@@ -36,7 +36,7 @@ func (r AuthRepo) CreateUser(user *models.User) (int, error) {
 
 func (r AuthRepo) GetUserByID(userID int) (*models.User, int, error) {
 	var user models.User
-	query := "SELECT * FROM users WHERE id = :id"
+	query := "SELECT * FROM users WHERE id = ?"
 	err := r.db.Get(&user, query, userID)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to get user")
@@ -46,7 +46,7 @@ func (r AuthRepo) GetUserByID(userID int) (*models.User, int, error) {
 }
 
 func (r AuthRepo) DeleteUser(userID int) (int, error) {
-	query := "DELETE FROM users WHERE id = $id"
+	query := "DELETE FROM users WHERE id = ?"
 
 	_, err := r.db.Exec(query, userID)
 	if err != nil {
@@ -125,7 +125,7 @@ func (r AuthRepo) getAuthTokens(userID int) (*models.TokenResponse, int, error) 
 		expire_time = VALUES(expire_time), 
 		created_at = CURRENT_TIMESTAMP
 	`
-	r.db.Exec(query, userID, refreshToken, refreshTokenExpire)
+	_, err = r.db.Exec(query, userID, refreshToken, refreshTokenExpire)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("please try again later")
 	}
