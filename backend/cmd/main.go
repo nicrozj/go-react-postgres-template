@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/internal/config"
 	"backend/internal/handlers"
 
 	"github.com/gin-gonic/gin"
@@ -9,9 +10,19 @@ import (
 )
 
 func main() {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	_, err = config.ParseEnvs()
+	if err != nil {
+		panic(err)
+	}
 
 	r := gin.Default()
 	r.GET("/greet", handlers.Greet)
-	r.Run(":8080")
+	err = r.Run(":8080")
+	if err != nil {
+		panic(err)
+	}
 }
