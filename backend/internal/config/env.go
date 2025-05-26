@@ -9,6 +9,7 @@ import (
 type AppEnvs struct {
 	JWT_SECRET_KEY            string
 	DB_URL                    string
+	WEB_URL                   string
 	HTTP_ACCESS_TOKEN_EXPIRE  int
 	HTTP_REFRESH_TOKEN_EXPIRE int
 }
@@ -20,10 +21,11 @@ func ParseEnvs() (*AppEnvs, error) {
 
 	Envs = &AppEnvs{
 		JWT_SECRET_KEY: os.Getenv("JWT_SECRET_KEY"),
+		WEB_URL:        os.Getenv("WEB_URL"),
 		DB_URL:         os.Getenv("DB_URL"),
 	}
 
-	if Envs.DB_URL == "" || Envs.JWT_SECRET_KEY == "" {
+	if Envs.DB_URL == "" || Envs.JWT_SECRET_KEY == "" || Envs.WEB_URL == "" {
 		err = fmt.Errorf("invalid env variables in .env file")
 	}
 

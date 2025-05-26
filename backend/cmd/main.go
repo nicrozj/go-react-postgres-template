@@ -1,10 +1,9 @@
 package main
 
 import (
+	"backend/internal/api"
 	"backend/internal/config"
-	"backend/internal/handlers"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -19,10 +18,8 @@ func main() {
 		panic(err)
 	}
 
-	r := gin.Default()
-	r.GET("/greet", handlers.Greet)
-	err = r.Run(":8080")
-	if err != nil {
+	server := api.NewServer()
+	if err := server.Engine.Run(":8080"); err != nil {
 		panic(err)
 	}
 }

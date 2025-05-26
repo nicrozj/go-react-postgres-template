@@ -26,31 +26,48 @@ func NewAuthRepo() AuthRepositoryInterface {
 }
 
 func (r AuthRepo) CreateUser(user *models.User) (int, error) {
-	query := "INSERT INTO users(username, password_hash) VALUES(?, ?) RETURNING id"
-	_, err := r.db.Exec(query, user.Username, user.PasswordHash)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to create user")
+	var row int
+	query := "SELECT count(username) FROM users WHERE username = $1"
+	err := r.db.QueryRow(query, user.Username).Scan(&row)
+	if err != nil && err != sql.ErrNoRows {
+		return http.StatusInternalServerError, fmt.Errorf("please try again later")
 	}
+
+	if row != 0 {
+		return http.StatusBadRequest, fmt.Errorf("username already taken, please use different username")
+	}
+
+	query = "INSERT INTO users(username, password_hash) VALUES($1, $2) RETURNING id"
+	hashPassword, err := getHashPassword(user.PasswordHash)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("please try again later")
+	}
+
+	_, err = r.db.Exec(query, user.Username, string(hashPassword))
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("please try again later")
+	}
+
 	return http.StatusOK, nil
 }
 
 func (r AuthRepo) GetUserByID(userID int) (*models.User, int, error) {
 	var user models.User
-	query := "SELECT * FROM users WHERE id = ?"
-	err := r.db.Get(&user, query, userID)
+	query := "SELECT id, username, password_hash FROM users WHERE id = $1"
+	err := r.db.QueryRow(query, userID).Scan(&user.Id, &user.Username, &user.PasswordHash)
 	if err != nil {
-		return nil, http.StatusInternalServerError, fmt.Errorf("failed to get user")
+		return nil, http.StatusInternalServerError, fmt.Errorf("please try again later")
 	}
 
 	return &user, http.StatusOK, nil
 }
 
 func (r AuthRepo) DeleteUser(userID int) (int, error) {
-	query := "DELETE FROM users WHERE id = ?"
+	query := "DELETE FROM users WHERE id = $1"
 
 	_, err := r.db.Exec(query, userID)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to delete user")
+		return http.StatusInternalServerError, err
 	}
 
 	return http.StatusAccepted, nil
@@ -58,16 +75,16 @@ func (r AuthRepo) DeleteUser(userID int) (int, error) {
 
 func (r AuthRepo) LoginUser(user *models.User) (*models.TokenResponse, int, error) {
 	existUser := &models.User{}
-	query := "SELECT id, username, password_hash FROM users WHERE username = $username"
+	query := "SELECT id, username, password_hash FROM users WHERE username = $1"
 	err := r.db.QueryRow(query, user.Username).Scan(&existUser.Id, &existUser.Username, &existUser.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, http.StatusBadRequest, fmt.Errorf("please check credentials")
 		}
-		return nil, http.StatusBadRequest, fmt.Errorf("please try again later")
+		return nil, http.StatusBadRequest, err
 	}
 
-	isValid := checkPassword(user.PasswordHash, existUser.PasswordHash)
+	isValid := checkPassword(existUser.PasswordHash, user.PasswordHash)
 	if !isValid {
 		return nil, http.StatusUnauthorized, fmt.Errorf("incorrect password, please try again")
 	}
@@ -76,7 +93,7 @@ func (r AuthRepo) LoginUser(user *models.User) (*models.TokenResponse, int, erro
 }
 
 func (r AuthRepo) LogoutUser(userID int) (int, error) {
-	query := "DELETE FROM refresh_tokens WHERE user_id = ?"
+	query := "DELETE FROM refresh_tokens WHERE user_id = $1"
 	_, err := r.db.Exec(query, userID)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("please try again later")
@@ -87,7 +104,7 @@ func (r AuthRepo) LogoutUser(userID int) (int, error) {
 func (r AuthRepo) GenerateTokens(userID int, oldRefreshToken string) (*models.TokenResponse, int, error) {
 	var dbRefreshToken string
 
-	query := "SELECT refresh_token FROM refresh_tokens WHERE user_id = ?"
+	query := "SELECT refresh_token FROM refresh_tokens WHERE user_id = $1"
 
 	err := r.db.QueryRow(query, userID).Scan(&dbRefreshToken)
 	if err != nil {
@@ -118,13 +135,14 @@ func (r AuthRepo) getAuthTokens(userID int) (*models.TokenResponse, int, error) 
 	}
 
 	query := `
-		INSERT INTO refresh_tokens (user_id, refresh_token, expire_time)
-		VALUES(?, ?, ?)
-		ON DUPLICATE KEY UPDATE
-		refresh_token = VALUES(refresh_token),
-		expire_time = VALUES(expire_time), 
-		created_at = CURRENT_TIMESTAMP
-	`
+    INSERT INTO refresh_tokens (user_id, refresh_token, expire_time, created_at)
+    VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+        refresh_token = EXCLUDED.refresh_token,
+        expire_time = EXCLUDED.expire_time,
+        created_at = CURRENT_TIMESTAMP
+`
 	_, err = r.db.Exec(query, userID, refreshToken, refreshTokenExpire)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("please try again later")
@@ -139,12 +157,21 @@ func getToken(userID int, expireTime int64) (string, error) {
 		"exp":     expireTime,
 	}
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(config.Envs.JWT_SECRET_KEY)
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(config.Envs.JWT_SECRET_KEY))
 	if err != nil {
 		return "", err
 	}
 
 	return token, nil
+}
+
+func getHashPassword(password string) (string, error) {
+	bytePassword := []byte(password)
+	hash, err := bcrypt.GenerateFromPassword(bytePassword, bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }
 
 func checkPassword(hashPassword, password string) bool {
